@@ -1,10 +1,10 @@
 #include <test.hpp>
 
-#include <core.hpp>
+#include <MPC.hpp>
 
 #include <vector>
 
 TEST(Core, BasicTest) {
-    Core core;
+    MPC mpc;
     ASSERT_TRUE(true);
 }

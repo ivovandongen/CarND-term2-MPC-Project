@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(TEMPLATE)
+project(MPC_CONTROLLER)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -49,12 +49,19 @@ add_subdirectory(src)
 
 # Main executable
 
-add_executable(Template
+## Submodules
+git_include(json)
+git_include(uWebSockets)
+
+add_executable(MPC
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     )
 
-target_link_libraries(Template core)
-
+target_link_libraries(MPC
+    core
+    json
+    libuWS
+    )
 
 # Tests
 
