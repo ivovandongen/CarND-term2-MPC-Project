@@ -1,12 +1,12 @@
 #include "MPC.hpp"
+
 #include <cppad/cppad.hpp>
 #include <cppad/ipopt/solve.hpp>
 #include <Eigen/Core>
 
-using CppAD::AD;
+#include <utility>
 
-// TODO; get rid of this
-using namespace std;
+using CppAD::AD;
 
 // TODO: Set the timestep length and duration
 size_t N = 0;
@@ -29,9 +29,9 @@ public:
     // Fitted polynomial coefficients
     Eigen::VectorXd coeffs;
 
-    FG_eval(Eigen::VectorXd coeffs) { this->coeffs = coeffs; }
+    explicit FG_eval(Eigen::VectorXd coeffs_) : coeffs(std::move(coeffs_)) {}
 
-    using ADvector = CppAD::vector<AD<double> >;
+    using ADvector = CppAD::vector<AD<double>>;
 
     void operator()(ADvector &fg, const ADvector &vars) {
         // TODO: implement MPC
@@ -48,9 +48,7 @@ MPC::MPC() = default;
 
 MPC::~MPC() = default;
 
-vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
-    bool ok = true;
-    size_t i;
+MPC::Actuations MPC::Solve(const Eigen::VectorXd &state, const Eigen::VectorXd &coeffs) {
     using Dvector = CppAD::vector<double>;
 
     // TODO: Set the number of model variables (includes both states and inputs).
@@ -112,7 +110,10 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
             constraints_upperbound, fg_eval, solution);
 
     // Check some of the solution values
-    ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
+    bool ok = solution.status == CppAD::ipopt::solve_result<Dvector>::success;
+    if (!ok) {
+        std::cout << "Solution failed: " << solution.status << std::endl;
+    }
 
     // Cost
     auto cost = solution.obj_value;
@@ -123,5 +124,5 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
-    return {};
+    return {0.0, 1.0};
 }
