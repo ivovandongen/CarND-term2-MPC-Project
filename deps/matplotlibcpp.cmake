@@ -1,4 +1,4 @@
-include_guard_x(__MATPLOTLIBCPP__)
+include_guard_x()
 
 # We need the python header
 find_package(PythonLibs 2.7 REQUIRED)

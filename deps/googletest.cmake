@@ -1,4 +1,4 @@
-include_guard_x(__GOOGLETEST__)
+include_guard_x()
 
 set(GTEST_DIR ${CMAKE_SOURCE_DIR}/deps/googletest/googletest)
 

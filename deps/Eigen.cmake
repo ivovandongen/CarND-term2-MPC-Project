@@ -1,4 +1,4 @@
-include_guard_x(__EIGEN__)
+include_guard_x()
 
 add_library(Eigen INTERFACE)
 
