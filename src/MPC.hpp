@@ -48,6 +48,8 @@ public:
         const std::vector<Point> path;
     };
 
+    State predict(const MPC::State &state, const Actuators &actuators, double dt);
+
     // Solve the model given an initial state and polynomial coefficients.
     // Return the first actuations.
     Result Solve(const State &state, const Eigen::VectorXd &coeffs);

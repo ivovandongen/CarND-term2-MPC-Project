@@ -56,6 +56,8 @@ int main() {
                     double py = j[1]["y"];
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
+                    double steering_angle = j[1]["steering_angle"];
+                    double throttle = j[1]["throttle"];
 
                     // Transform points to car coordinates
                     assert(ptsx.size() == ptsy.size());
@@ -78,8 +80,11 @@ int main() {
                     // Calculate epsi
                     auto epsi = -atan(coeffs[1]);
 
-                    // Setup the current state
-                    MPC::State state{0, 0, 0, v, cte, epsi};
+                    // Calculate predicted state taking latency into account
+                    const int latency_ms = 100;
+                    const double latency_s = latency_ms / 1000.0;
+                    // Note; flip steering angle delta
+                    auto state = mpc.predict({0, 0, 0, v, cte, epsi}, {-(steering_angle), throttle}, latency_s);
 
                     // Calculate actuations
                     auto result = mpc.Solve(state, coeffs);
@@ -107,8 +112,17 @@ int main() {
 
                     // Display the waypoints/reference line, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Yellow line
-                    std::vector<double> next_x_vals(xPoints.data(), xPoints.data() + xPoints.size());
-                    std::vector<double> next_y_vals(yPoints.data(), yPoints.data() + yPoints.size());
+                    std::vector<double> next_x_vals;
+                    std::vector<double> next_y_vals;
+
+                    // Determine where to start after the latency
+                    // (Don't draw lines behind the car)
+                    double predicted_position = v * .44704 * latency_s;
+                    for (size_t i = 0; i < 80; i += 2) {
+                        auto x = predicted_position + i;
+                        next_x_vals.push_back(x);
+                        next_y_vals.push_back(polyeval(coeffs, x));
+                    }
 
                     msgJson["next_x"] = next_x_vals;
                     msgJson["next_y"] = next_y_vals;
@@ -124,8 +138,7 @@ int main() {
                     //
                     // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
                     // SUBMITTING.
-                    // TODO
-//                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(latency_ms));
                     ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
                 }
             } else {

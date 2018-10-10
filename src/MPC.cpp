@@ -132,15 +132,15 @@ private:
     const Eigen::VectorXd coeffs;
 
     // Cost multipliers
-    const int mp_state_cte = 1000;
+    const int mp_state_cte = 100;
     const int mp_state_epsi = 1000;
     const int mp_state_v = 1;
 
-    const int mp_actuator_delta = 50;
-    const int mp_actuator_a = 50;
+    const int mp_actuator_delta = 500;
+    const int mp_actuator_a = 5;
 
-    const int mp_seq_actuations_delta = 250000;
-    const int mp_seq_actuations_a = 5000;
+    const int mp_seq_actuations_delta = 300000;
+    const int mp_seq_actuations_a = 500;
 };
 
 //
@@ -149,6 +149,23 @@ private:
 MPC::MPC() = default;
 
 MPC::~MPC() = default;
+
+MPC::State MPC::predict(const MPC::State &state, const MPC::Actuators &actuators, double dt) {
+    return {
+            // x_[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+            state.x + state.v * cos(state.psi) * dt,
+            // y_[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+            state.y + state.v * sin(state.psi) * dt,
+            // psi_[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+            state.psi + state.v / Lf * actuators.delta * dt,
+            // v_[t] = v[t-1] + a[t-1] * dt
+            state.v + actuators.a * dt,
+            // cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+            state.cte + state.v * sin(state.epsi) * dt,
+            // epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+            state.epsi + state.v / Lf * actuators.delta * dt
+    };
+}
 
 MPC::Result MPC::Solve(const MPC::State &state, const Eigen::VectorXd &coeffs) {
     using Dvector = CppAD::vector<double>;
